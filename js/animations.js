@@ -108,8 +108,12 @@ class AnimationSystem {
             // 设置滚动动画参数
             this.setupScrollAnimation();
             
+            // 添加视觉特效
+            this.createAudioVisualization();
+            
             // 动画定时器
-            const animationTimer = setTimeout(() => {
+            const animationTimer = setTimeout(async () => {
+                await this.slowDownAnimation();
                 this.stopRandomScroll();
                 resolve();
             }, this.animationSettings.duration);
@@ -121,6 +125,105 @@ class AnimationSystem {
                 startTime: Date.now()
             };
         });
+    }
+
+    /**
+     * 减速动画效果
+     */
+    async slowDownAnimation() {
+        return new Promise((resolve) => {
+            // 添加减速类
+            this.studentScroll.classList.add('slowing');
+            this.studentScroll.classList.remove('rolling');
+            
+            // 移除音频可视化
+            this.removeAudioVisualization();
+            
+            // 添加彩虹光谱效果
+            this.createRainbowSpectrum();
+            
+            // 延迟解决Promise以匹配动画时间
+            setTimeout(() => {
+                this.studentScroll.classList.remove('slowing');
+                resolve();
+            }, 3000);
+        });
+    }
+
+    /**
+     * 创建音频可视化效果
+     */
+    createAudioVisualization() {
+        const audioWave = document.createElement('div');
+        audioWave.className = 'audio-wave';
+        
+        // 创建8个音频条
+        for (let i = 0; i < 8; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'audio-bar';
+            audioWave.appendChild(bar);
+        }
+        
+        this.studentScroll.appendChild(audioWave);
+    }
+
+    /**
+     * 移除音频可视化效果
+     */
+    removeAudioVisualization() {
+        const audioWave = this.studentScroll.querySelector('.audio-wave');
+        if (audioWave) {
+            audioWave.remove();
+        }
+    }
+
+    /**
+     * 创建彩虹光谱效果
+     */
+    createRainbowSpectrum() {
+        const spectrum = document.createElement('div');
+        spectrum.className = 'rainbow-spectrum';
+        
+        // 添加粒子效果
+        this.createParticleEffect();
+        
+        this.studentScroll.appendChild(spectrum);
+        
+        // 2秒后移除效果
+        setTimeout(() => {
+            spectrum.remove();
+            this.removeParticleEffect();
+        }, 2000);
+    }
+
+    /**
+     * 创建粒子效果
+     */
+    createParticleEffect() {
+        const particleContainer = document.createElement('div');
+        particleContainer.className = 'particle-effect';
+        
+        // 创建20个粒子
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 2 + 's';
+            particle.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+            particleContainer.appendChild(particle);
+        }
+        
+        this.studentScroll.appendChild(particleContainer);
+    }
+
+    /**
+     * 移除粒子效果
+     */
+    removeParticleEffect() {
+        const particleContainer = this.studentScroll.querySelector('.particle-effect');
+        if (particleContainer) {
+            particleContainer.remove();
+        }
     }
 
     /**
@@ -194,24 +297,106 @@ class AnimationSystem {
      * 设置滚动动画
      */
     setupScrollAnimation() {
-        // 根据滚动速度设置动画持续时间
-        const animationDuration = Math.max(100, 1000 - this.animationSettings.speed * 10);
+        // 动态设置动画持续时间，基于速度和持续时间设置
+        const baseDuration = Math.max(100, 2000 - this.animationSettings.speed * 20);
         const scrollContent = this.studentScroll.querySelector('.scroll-content');
         
         // 设置CSS变量
-        scrollContent.style.setProperty('--scroll-animation-duration', `${animationDuration}ms`);
+        scrollContent.style.setProperty('--scroll-animation-duration', `${baseDuration}ms`);
         
         // 添加随机滚动的CSS类
         this.studentScroll.classList.add('student-scroll');
         
-        // 设置随机滚动动画
-        scrollContent.style.animation = `rollNames ${animationDuration}ms linear infinite`;
+        // 设置随机滚动动画 - 使用新的智能动画
+        scrollContent.style.animation = `smartRollNames 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite`;
         
-        // 为名字元素设置动画
+        // 为名字元素设置增强的动画
         const nameElements = this.studentScroll.querySelectorAll('.student-name');
         nameElements.forEach(el => {
-            el.style.animation = `nameShuffle ${animationDuration}ms linear infinite`;
+            el.style.animation = `enhancedNameShuffle 0.8s ease-in-out infinite`;
         });
+    }
+
+    /**
+     * 显示选中的学生
+     * @param {Object} student - 选中的学生对象
+     */
+    showSelectedStudent(student) {
+        return new Promise((resolve) => {
+            // 清除所有高亮
+            this.clearAllHighlights();
+            
+            // 找到对应的名字元素
+            const nameElements = this.studentScroll.querySelectorAll('.student-name');
+            let selectedElement = null;
+            
+            // 查找匹配的学生名字
+            nameElements.forEach(el => {
+                if (el.textContent === student.name) {
+                    selectedElement = el;
+                }
+            });
+            
+            // 如果没找到，创建一个新的元素
+            if (!selectedElement) {
+                selectedElement = document.createElement('div');
+                selectedElement.className = 'student-name selected';
+                selectedElement.textContent = student.name;
+                selectedElement.style.fontSize = '2rem';
+                selectedElement.style.fontWeight = 'bold';
+                selectedElement.style.textAlign = 'center';
+                selectedElement.style.color = 'var(--primary-color)';
+                selectedElement.style.margin = '2rem 0';
+                
+                // 添加到显示容器
+                this.currentNameElement.innerHTML = '';
+                this.currentNameElement.appendChild(selectedElement);
+            } else {
+                selectedElement.classList.add('selected');
+            }
+            
+            // 添加戏剧性揭晓动画类
+            selectedElement.classList.add('bounce-effect');
+            
+            // 添加容器揭示效果
+            if (this.displayContainer) {
+                this.displayContainer.classList.add('revealing');
+                
+                // 移除revealing类，动画完成后
+                setTimeout(() => {
+                    this.displayContainer.classList.remove('revealing');
+                }, 1200);
+            }
+            
+            // 添加震动效果增强戏剧性
+            setTimeout(() => {
+                selectedElement.classList.add('shake-effect');
+                
+                setTimeout(() => {
+                    selectedElement.classList.remove('shake-effect');
+                }, 500);
+            }, 800);
+            
+            // 3秒后解决Promise
+            setTimeout(() => {
+                resolve(student);
+            }, 3000);
+        });
+    }
+
+    /**
+     * 清除所有高亮
+     */
+    clearAllHighlights() {
+        const nameElements = this.studentScroll.querySelectorAll('.student-name');
+        nameElements.forEach(el => {
+            el.classList.remove('highlighted', 'selected', 'bounce-effect', 'shake-effect');
+        });
+        
+        // 清除容器效果
+        if (this.displayContainer) {
+            this.displayContainer.classList.remove('revealing');
+        }
     }
 
     /**

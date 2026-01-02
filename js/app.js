@@ -15,6 +15,156 @@ class RollCallApp {
         this.autoStopTimer = null;
         this.isAnimating = false;
         this.callAlgorithm = null; // 将在这里初始化点名算法实例
+        // 操作历史管理
+        this.operationHistory = [];
+        this.historyIndex = -1;
+        this.maxHistorySize = 50; // 最大历史记录数量
+    }
+
+    /**
+     * 记录操作到历史记录
+     * @param {Object} operation - 操作对象，包含type、data、undoData等信息
+     */
+    recordOperation(operation) {
+        // 如果当前不是在历史记录的末尾，清除后面的历史
+        if (this.historyIndex < this.operationHistory.length - 1) {
+            this.operationHistory = this.operationHistory.slice(0, this.historyIndex + 1);
+        }
+        
+        // 添加新操作
+        this.operationHistory.push(operation);
+        
+        // 限制历史记录数量
+        if (this.operationHistory.length > this.maxHistorySize) {
+            this.operationHistory.shift();
+        } else {
+            this.historyIndex++;
+        }
+        
+        // 更新撤销/重做按钮状态
+        this.updateUndoRedoButtons();
+    }
+
+    /**
+     * 撤销上一步操作
+     */
+    async undo() {
+        if (this.historyIndex < 0) return;
+        
+        const operation = this.operationHistory[this.historyIndex];
+        
+        try {
+            switch (operation.type) {
+                case 'addClass':
+                    await window.storageManager.deleteClass(operation.data.id);
+                    break;
+                case 'editClass':
+                    await window.storageManager.updateClass(operation.undoData);
+                    break;
+                case 'deleteClass':
+                    await window.storageManager.createClass(operation.undoData);
+                    break;
+                case 'addStudent':
+                    await window.storageManager.deleteStudent(operation.data.id);
+                    break;
+                case 'editStudent':
+                    await window.storageManager.updateStudent(operation.undoData);
+                    break;
+                case 'deleteStudent':
+                    await window.storageManager.addStudent(operation.undoData);
+                    break;
+            }
+            
+            // 更新界面
+            await this.loadClasses();
+            if (this.currentClassId) {
+                await this.loadStudents();
+            }
+            
+            // 移动历史索引
+            this.historyIndex--;
+            this.updateUndoRedoButtons();
+            this.showNotification('操作已撤销', 'success');
+        } catch (error) {
+            console.error('撤销操作失败:', error);
+            this.showNotification('撤销操作失败', 'error');
+        }
+    }
+
+    /**
+     * 重做下一步操作
+     */
+    async redo() {
+        if (this.historyIndex >= this.operationHistory.length - 1) return;
+        
+        const operation = this.operationHistory[this.historyIndex + 1];
+        
+        try {
+            switch (operation.type) {
+                case 'addClass':
+                    await window.storageManager.createClass(operation.data);
+                    break;
+                case 'editClass':
+                    await window.storageManager.updateClass(operation.data);
+                    break;
+                case 'deleteClass':
+                    await window.storageManager.deleteClass(operation.data.id);
+                    break;
+                case 'addStudent':
+                    await window.storageManager.addStudent(operation.data);
+                    break;
+                case 'editStudent':
+                    await window.storageManager.updateStudent(operation.data);
+                    break;
+                case 'deleteStudent':
+                    await window.storageManager.deleteStudent(operation.data.id);
+                    break;
+            }
+            
+            // 更新界面
+            await this.loadClasses();
+            if (this.currentClassId) {
+                await this.loadStudents();
+            }
+            
+            // 移动历史索引
+            this.historyIndex++;
+            this.updateUndoRedoButtons();
+            this.showNotification('操作已重做', 'success');
+        } catch (error) {
+            console.error('重做操作失败:', error);
+            this.showNotification('重做操作失败', 'error');
+        }
+    }
+
+    /**
+     * 更新撤销/重做按钮状态
+     */
+    updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        
+        if (undoBtn) {
+            undoBtn.disabled = this.historyIndex < 0;
+        }
+        
+        if (redoBtn) {
+            redoBtn.disabled = this.historyIndex >= this.operationHistory.length - 1;
+        }
+    }
+    
+    /**
+     * 更新班级操作按钮状态
+     */
+    updateClassButtons() {
+        const editBtn = document.getElementById('editClassBtn');
+        const deleteBtn = document.getElementById('deleteClassBtn');
+        
+        if (editBtn && deleteBtn) {
+            const hasClass = !!this.currentClassId;
+            editBtn.disabled = !hasClass;
+            deleteBtn.disabled = !hasClass;
+        }
     }
 
     /**
@@ -37,17 +187,17 @@ class RollCallApp {
                 });
             }
 
-            // 加载设置
-            await this.loadSettings();
-
             // 初始化点名算法
             this.initCallAlgorithm();
 
-            // 加载班级列表
-            await this.loadClasses();
+            // 加载设置
+            await this.loadSettings();
 
             // 设置事件监听器
             this.setupEventListeners();
+
+            // 加载班级列表（会自动选择最近使用的班级）
+            await this.loadClasses();
 
             // 初始化界面
             this.initializeUI();
@@ -118,6 +268,9 @@ class RollCallApp {
                 window.animationSystem.applyTheme(settings.theme);
             }
             
+            // 获取最近使用的班级ID
+            this.recentClassId = settings.recentClassId || null;
+            
             console.log('设置加载完成');
         } catch (error) {
             console.error('加载设置失败:', error);
@@ -142,6 +295,16 @@ class RollCallApp {
                 option.textContent = cls.name;
                 classSelector.appendChild(option);
             });
+            
+            // 自动选择最近使用的班级
+            if (this.recentClassId) {
+                const recentOption = classSelector.querySelector(`option[value="${this.recentClassId}"]`);
+                if (recentOption) {
+                    recentOption.selected = true;
+                    this.currentClassId = this.recentClassId;
+                    await this.loadStudents();
+                }
+            }
             
             console.log(`已加载 ${classes.length} 个班级`);
         } catch (error) {
@@ -369,6 +532,24 @@ class RollCallApp {
         document.getElementById('classSelector').addEventListener('change', (e) => {
             this.currentClassId = e.target.value ? parseInt(e.target.value) : null;
             this.loadStudents();
+            
+            // 更新编辑和删除按钮状态
+            this.updateClassButtons();
+            
+            // 保存最近使用的班级ID
+            if (this.currentClassId) {
+                window.storageManager.saveSetting('recentClassId', this.currentClassId);
+            }
+        });
+        
+        // 编辑班级按钮
+        document.getElementById('editClassBtn').addEventListener('click', () => {
+            this.showEditClassModal();
+        });
+        
+        // 删除班级按钮
+        document.getElementById('deleteClassBtn').addEventListener('click', () => {
+            this.confirmDeleteClass();
         });
         
         // 导航标签
@@ -628,12 +809,57 @@ class RollCallApp {
         const startBtn = document.getElementById('startCallBtn');
         const stopBtn = document.getElementById('stopCallBtn');
         
+        // 检查是否有选择班级和学生
+        const hasClass = !!this.currentClassId;
+        const hasStudents = this.currentStudents.length > 0;
+        const canStart = hasClass && hasStudents;
+        
         if (this.isRolling) {
+            // 点名进行中状态
             startBtn.disabled = true;
             stopBtn.disabled = false;
+            
+            // 视觉反馈类
+            startBtn.classList.add('btn-disabled', 'btn-rolling');
+            stopBtn.classList.add('btn-active', 'btn-stop');
+            
+            // 添加加载动画和状态文本
+            if (this.isAnimating) {
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 滚动中...';
+                stopBtn.innerHTML = '<i class="fas fa-stop"></i> 停止滚动';
+            } else {
+                startBtn.innerHTML = '<i class="fas fa-pause"></i> 等待中...';
+                stopBtn.innerHTML = '<i class="fas fa-check"></i> 确认结果';
+            }
+            
+            // 添加焦点到停止按钮
+            stopBtn.focus();
         } else {
-            startBtn.disabled = false;
+            // 点名停止状态
+            startBtn.disabled = !canStart;
             stopBtn.disabled = true;
+            
+            // 移除视觉反馈类
+            startBtn.classList.remove('btn-disabled', 'btn-rolling');
+            stopBtn.classList.remove('btn-active', 'btn-stop');
+            
+            // 根据是否可以开始点名显示不同文本
+            if (canStart) {
+                startBtn.innerHTML = '<i class="fas fa-play"></i> 开始点名';
+                startBtn.title = '开始随机点名';
+                startBtn.classList.remove('btn-warning');
+            } else if (!hasClass) {
+                startBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 请选择班级';
+                startBtn.title = '请先选择一个班级';
+                startBtn.classList.add('btn-warning');
+            } else if (!hasStudents) {
+                startBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 无学生数据';
+                startBtn.title = '当前班级没有学生';
+                startBtn.classList.add('btn-warning');
+            }
+            
+            stopBtn.innerHTML = '<i class="fas fa-stop"></i> 停止点名';
+            stopBtn.title = '停止当前点名';
         }
     }
 
@@ -691,6 +917,51 @@ class RollCallApp {
         
         modal.style.display = 'flex';
     }
+    
+    /**
+     * 显示编辑班级模态框
+     */
+    async showEditClassModal() {
+        if (!this.currentClassId) {
+            this.showNotification('请先选择班级', 'warning');
+            return;
+        }
+        
+        try {
+            const modal = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            const confirm = document.getElementById('modalConfirm');
+            
+            // 获取当前班级信息
+            const currentClass = await window.storageManager.getClassById(this.currentClassId);
+            
+            title.textContent = '编辑班级';
+            
+            body.innerHTML = `
+                <form id="classForm">
+                    <div class="form-group">
+                        <label for="className">班级名称 <span class="required">*</span></label>
+                        <input type="text" id="className" value="${currentClass.name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="classDescription">班级描述</label>
+                        <textarea id="classDescription" rows="3">${currentClass.description || ''}</textarea>
+                    </div>
+                </form>
+            `;
+            
+            confirm.textContent = '保存';
+            confirm.onclick = () => {
+                this.updateClass();
+            };
+            
+            modal.style.display = 'flex';
+        } catch (error) {
+            console.error('获取班级信息失败:', error);
+            this.showNotification('获取班级信息失败', 'error');
+        }
+    }
 
     /**
      * 添加班级
@@ -705,13 +976,65 @@ class RollCallApp {
         }
         
         try {
-            await window.storageManager.createClass({ name, description });
+            const newClass = await window.storageManager.createClass({ name, description });
             await this.loadClasses();
             this.closeModal();
             this.showNotification('班级添加成功', 'success');
+            
+            // 记录操作
+            this.recordOperation({
+                type: 'addClass',
+                data: newClass,
+                timestamp: Date.now()
+            });
         } catch (error) {
             console.error('添加班级失败:', error);
             this.showNotification('添加班级失败', 'error');
+        }
+    }
+    
+    /**
+     * 更新班级信息
+     */
+    async updateClass() {
+        if (!this.currentClassId) {
+            this.showNotification('请先选择班级', 'warning');
+            return;
+        }
+        
+        const name = document.getElementById('className').value.trim();
+        const description = document.getElementById('classDescription').value.trim();
+        
+        if (!name) {
+            this.showNotification('请输入班级名称', 'warning');
+            return;
+        }
+        
+        try {
+            // 获取原始班级信息用于撤销
+            const originalClass = await window.storageManager.getClassById(this.currentClassId);
+            
+            // 更新班级
+            const updatedClass = await window.storageManager.updateClass({
+                id: this.currentClassId,
+                name,
+                description
+            });
+            
+            await this.loadClasses();
+            this.closeModal();
+            this.showNotification('班级更新成功', 'success');
+            
+            // 记录操作
+            this.recordOperation({
+                type: 'editClass',
+                data: updatedClass,
+                undoData: originalClass,
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            console.error('更新班级失败:', error);
+            this.showNotification('更新班级失败', 'error');
         }
     }
 
@@ -780,18 +1103,27 @@ class RollCallApp {
         }
         
         try {
-            await window.storageManager.addStudent({
+            const studentData = {
                 classId: this.currentClassId,
                 name,
                 studentId,
                 phone,
                 email,
                 notes
-            });
+            };
+            
+            const newStudent = await window.storageManager.addStudent(studentData);
             
             await this.loadStudents();
             this.closeModal();
             this.showNotification('学生添加成功', 'success');
+            
+            // 记录操作
+            this.recordOperation({
+                type: 'addStudent',
+                data: newStudent,
+                timestamp: Date.now()
+            });
         } catch (error) {
             console.error('添加学生失败:', error);
             this.showNotification(error.message || '添加学生失败', 'error');
@@ -871,17 +1203,30 @@ class RollCallApp {
         }
         
         try {
-            await window.storageManager.updateStudent(studentId, {
+            // 获取原始学生数据用于撤销
+            const originalStudent = await window.storageManager.getStudentById(studentId);
+            
+            const updatedStudent = {
                 name,
                 studentId: studentIdValue,
                 phone,
                 email,
                 notes
-            });
+            };
+            
+            await window.storageManager.updateStudent(studentId, updatedStudent);
             
             await this.loadStudents();
             this.closeModal();
             this.showNotification('学生信息更新成功', 'success');
+            
+            // 记录操作
+            this.recordOperation({
+                type: 'editStudent',
+                data: { id: studentId, ...updatedStudent },
+                undoData: originalStudent,
+                timestamp: Date.now()
+            });
         } catch (error) {
             console.error('更新学生信息失败:', error);
             this.showNotification(error.message || '更新学生信息失败', 'error');
@@ -923,10 +1268,21 @@ class RollCallApp {
      */
     async deleteStudent(studentId) {
         try {
+            // 获取删除的学生数据用于撤销
+            const deletedStudent = await window.storageManager.getStudentById(studentId);
+            
             await window.storageManager.deleteStudent(studentId);
             await this.loadStudents();
             this.closeModal();
             this.showNotification('学生删除成功', 'success');
+            
+            // 记录操作
+            this.recordOperation({
+                type: 'deleteStudent',
+                data: { id: studentId },
+                undoData: deletedStudent,
+                timestamp: Date.now()
+            });
         } catch (error) {
             console.error('删除学生失败:', error);
             this.showNotification('删除学生失败', 'error');
@@ -1130,15 +1486,93 @@ class RollCallApp {
         if (!query) {
             // 显示所有学生
             cards.forEach(card => card.style.display = 'block');
+            this.hideAutoComplete();
             return;
         }
         
         // 过滤显示匹配的学生
+        const lowerQuery = query.toLowerCase();
+        let hasMatches = false;
+        
         cards.forEach(card => {
             const name = card.querySelector('.student-name').textContent.toLowerCase();
-            const isMatch = name.includes(query.toLowerCase());
+            const studentId = card.querySelector('.info-value').textContent.toLowerCase();
+            const phone = card.querySelectorAll('.info-value')[1]?.textContent.toLowerCase();
+            const email = card.querySelectorAll('.info-value')[2]?.textContent.toLowerCase();
+            
+            // 搜索多个字段
+            const isMatch = name.includes(lowerQuery) || 
+                           studentId.includes(lowerQuery) || 
+                           (phone && phone.includes(lowerQuery)) || 
+                           (email && email.includes(lowerQuery));
+            
             card.style.display = isMatch ? 'block' : 'none';
+            if (isMatch) hasMatches = true;
         });
+        
+        // 显示自动完成建议
+        this.showAutoComplete(query);
+    }
+    
+    /**
+     * 显示自动完成建议
+     * @param {string} query - 搜索关键词
+     */
+    showAutoComplete(query) {
+        // 创建自动完成容器（如果不存在）
+        let autoCompleteContainer = document.getElementById('autoCompleteContainer');
+        if (!autoCompleteContainer) {
+            autoCompleteContainer = document.createElement('div');
+            autoCompleteContainer.id = 'autoCompleteContainer';
+            autoCompleteContainer.className = 'autocomplete-container';
+            document.querySelector('.search-container').appendChild(autoCompleteContainer);
+        }
+        
+        // 过滤匹配的学生
+        const lowerQuery = query.toLowerCase();
+        const matchingStudents = this.currentStudents.filter(student => 
+            student.name.toLowerCase().includes(lowerQuery) ||
+            (student.studentId && student.studentId.toLowerCase().includes(lowerQuery))
+        );
+        
+        // 清空现有建议
+        autoCompleteContainer.innerHTML = '';
+        
+        // 显示最多5个建议
+        matchingStudents.slice(0, 5).forEach(student => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'autocomplete-item';
+            suggestionItem.innerHTML = `
+                <div class="suggestion-name">${student.name}</div>
+                <div class="suggestion-id">${student.studentId || ''}</div>
+            `;
+            
+            // 点击建议项时选择学生
+            suggestionItem.addEventListener('click', () => {
+                document.getElementById('studentSearch').value = student.name;
+                this.searchStudents(student.name);
+                this.hideAutoComplete();
+            });
+            
+            autoCompleteContainer.appendChild(suggestionItem);
+        });
+        
+        // 显示容器
+        if (matchingStudents.length > 0) {
+            autoCompleteContainer.style.display = 'block';
+        } else {
+            autoCompleteContainer.style.display = 'none';
+        }
+    }
+    
+    /**
+     * 隐藏自动完成建议
+     */
+    hideAutoComplete() {
+        const autoCompleteContainer = document.getElementById('autoCompleteContainer');
+        if (autoCompleteContainer) {
+            autoCompleteContainer.style.display = 'none';
+        }
     }
 
     /**

@@ -3,269 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>随机点名系统</title>
-    <link rel="stylesheet" href="./styles/main.css">
-    <link rel="stylesheet" href="./styles/components.css">
-    <link rel="stylesheet" href="./styles/animations.css">
+    <title>抬头望星</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/main.css">
+    <link rel="stylesheet" href="./styles/animations.css">
 </head>
 <body>
     <div id="app">
+        <!-- 应用头部 -->
         <header class="app-header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <i class="fas fa-graduation-cap"></i>
-                    <h1>随机点名系统</h1>
-                </div>
-                <div class="header-controls">
-                    <select id="classSelector" class="class-selector">
-                        <option value="">选择班级</option>
-                    </select>
-                    <button id="addClassBtn" class="btn btn-outline">
-                        <i class="fas fa-plus"></i> 添加班级
-                    </button>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <i class="fas fa-graduation-cap"></i>
+                        <h1>抬头望星</h1>
+                    </div>
+                    <div class="header-controls">
+                        <select id="classSelector" class="select-modern">
+                            <option value="">选择班级</option>
+                        </select>
+                        <button id="editClassBtn" class="btn btn-outline" disabled>
+                            <i class="fas fa-edit"></i> 编辑班级
+                        </button>
+                        <button id="deleteClassBtn" class="btn btn-outline btn-danger" disabled>
+                            <i class="fas fa-trash"></i> 删除班级
+                        </button>
+                        <button id="addClassBtn" class="btn btn-outline">
+                            <i class="fas fa-plus"></i> 添加班级
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
+        <!-- 导航菜单 -->
         <nav class="app-nav">
-            <div class="nav-content">
-                <button class="nav-item active" data-tab="call">
-                    <i class="fas fa-hand-pointer"></i>
-                    <span>随机点名</span>
-                </button>
-                <button class="nav-item" data-tab="students">
-                    <i class="fas fa-users"></i>
-                    <span>学生管理</span>
-                </button>
-                <button class="nav-item" data-tab="statistics">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>统计分析</span>
-                </button>
-                <button class="nav-item" data-tab="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>系统设置</span>
-                </button>
+            <div class="container">
+                <div class="nav-content">
+                    <button class="nav-item active" data-tab="call">
+                        <i class="fas fa-hand-pointer"></i>
+                        <span>随机点名</span>
+                    </button>
+                    <button class="nav-item" data-tab="students">
+                        <i class="fas fa-users"></i>
+                        <span>学生管理</span>
+                    </button>
+                    <button class="nav-item" data-tab="statistics">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>统计分析</span>
+                    </button>
+                    <button class="nav-item" data-tab="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>系统设置</span>
+                    </button>
+                </div>
             </div>
         </nav>
 
+        <!-- 主内容区域 -->
         <main class="app-main">
-            <div class="tab-content active" id="call-tab">
-                <div class="call-section">
-                    <div class="call-display">
-                        <div class="display-container">
-                            <div class="student-scroll" id="studentScroll">
-                                <div class="scroll-content">
-                                    <div class="student-name" id="currentName">点击开始点名</div>
+            <div class="container">
+                <!-- 随机点名标签页 -->
+                <section class="tab-content active" id="call-tab">
+                    <div class="call-section">
+                        <div class="call-display">
+                            <div class="display-container">
+                                <div class="student-scroll" id="studentScroll">
+                                    <div class="scroll-content">
+                                        <div class="student-name" id="currentName">点击开始点名</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="call-controls">
+                                <div class="control-group">
+                                    <div class="mode-selector">
+                                        <label>
+                                            <input type="radio" name="callMode" value="single" checked>
+                                            <span>单次点名</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="callMode" value="continuous">
+                                            <span>连续点名</span>
+                                        </label>
+                                    </div>
+                                    <div class="algorithm-selector">
+                                        <label for="algorithmSelect">选择算法</label>
+                                        <select id="algorithmSelect" class="form-control">
+                                            <option value="fair">公平随机</option>
+                                            <option value="weighted">权重随机</option>
+                                            <option value="leastCalled">最少点名优先</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="action-buttons">
+                                    <button id="startCallBtn" class="btn btn-primary btn-large">
+                                        <i class="fas fa-play"></i>
+                                        <span>开始点名</span>
+                                    </button>
+                                    <button id="stopCallBtn" class="btn btn-secondary btn-large" disabled>
+                                        <i class="fas fa-stop"></i>
+                                        <span>停止</span>
+                                    </button>
+                                    <button id="resetCallBtn" class="btn btn-outline">
+                                        <i class="fas fa-refresh"></i>
+                                        <span>重置</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        <div class="call-controls">
-                            <div class="mode-selector">
-                                <label>
-                                    <input type="radio" name="callMode" value="single" checked>
-                                    <span>单次点名</span>
-                                </label>
-                                <label>
-                                    <input type="radio" name="callMode" value="continuous">
-                                    <span>连续点名</span>
-                                </label>
+                    </div>
+                </section>
+
+                <!-- 学生管理标签页 -->
+                <section class="tab-content" id="students-tab">
+                    <div class="students-section">
+                        <div class="section-header">
+                            <h2>学生名单管理</h2>
+                            <div class="header-actions">
+                                <button id="addStudentBtn" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i>
+                                    添加学生
+                                </button>
+                                <button id="importStudentsBtn" class="btn btn-outline">
+                                    <i class="fas fa-file-import"></i>
+                                    批量导入
+                                </button>
+                                <button id="exportStudentsBtn" class="btn btn-outline">
+                                    <i class="fas fa-file-export"></i>
+                                    导出名单
+                                </button>
                             </div>
-                            <div class="algorithm-selector">
-                                <select id="algorithmSelect">
-                                    <option value="fair">公平随机</option>
-                                    <option value="weighted">权重随机</option>
-                                    <option value="leastCalled">最少点名优先</option>
+                        </div>
+                        <div class="students-content">
+                            <div class="search-bar">
+                                <div class="search-input">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="studentSearch" class="form-control" placeholder="搜索学生姓名...">
+                                </div>
+                                <div class="filter-options">
+                                    <select id="sortBy" class="form-control">
+                                        <option value="name">按姓名排序</option>
+                                        <option value="callCount">按点名次数排序</option>
+                                        <option value="lastCalled">按最后点名时间排序</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="students-list card" id="studentsList">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 统计分析标签页 -->
+                <section class="tab-content" id="statistics-tab">
+                    <div class="statistics-section">
+                        <div class="section-header">
+                            <h2>点名统计分析</h2>
+                            <div class="time-range-selector">
+                                <select id="timeRange" class="form-control">
+                                    <option value="7">最近7天</option>
+                                    <option value="30" selected>最近30天</option>
+                                    <option value="90">最近90天</option>
+                                    <option value="all">全部时间</option>
                                 </select>
                             </div>
-                            <div class="action-buttons">
-                                <button id="startCallBtn" class="btn btn-primary btn-large">
-                                    <i class="fas fa-play"></i>
-                                    <span>开始点名</span>
-                                </button>
-                                <button id="stopCallBtn" class="btn btn-secondary btn-large" disabled>
-                                    <i class="fas fa-stop"></i>
-                                    <span>停止</span>
-                                </button>
-                                <button id="resetCallBtn" class="btn btn-outline">
-                                    <i class="fas fa-refresh"></i>
-                                    <span>重置</span>
-                                </button>
+                        </div>
+                        <div class="statistics-content">
+                            <div class="stats-cards">
+                                <div class="stat-card card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="totalStudents">0</div>
+                                        <div class="stat-label">总学生数</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-hand-pointer"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="totalCalls">0</div>
+                                        <div class="stat-label">总点名次数</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="avgCallsPerStudent">0</div>
+                                        <div class="stat-label">人均被点名次数</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="mostCalledStudent">-</div>
+                                        <div class="stat-label">被点最多学生</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container card">
+                                <div class="chart-header">
+                                    <h3>学生点名频率统计</h3>
+                                    <button id="exportStatsBtn" class="btn btn-outline btn-small">
+                                        <i class="fas fa-download"></i>
+                                        导出报表
+                                    </button>
+                                </div>
+                                <div class="chart" id="frequencyChart">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            <div class="tab-content" id="students-tab">
-                <div class="students-section">
-                    <div class="section-header">
-                        <h2>学生名单管理</h2>
-                        <div class="header-actions">
-                            <button id="addStudentBtn" class="btn btn-primary">
-                                <i class="fas fa-user-plus"></i>
-                                添加学生
-                            </button>
-                            <button id="importStudentsBtn" class="btn btn-outline">
-                                <i class="fas fa-file-import"></i>
-                                批量导入
-                            </button>
-                            <button id="exportStudentsBtn" class="btn btn-outline">
-                                <i class="fas fa-file-export"></i>
-                                导出名单
-                            </button>
+                <!-- 系统设置标签页 -->
+                <section class="tab-content" id="settings-tab">
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h2>系统设置</h2>
                         </div>
-                    </div>
-                    <div class="students-content">
-                        <div class="search-bar">
-                            <div class="search-input">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="studentSearch" placeholder="搜索学生姓名...">
-                            </div>
-                            <div class="filter-options">
-                                <select id="sortBy">
-                                    <option value="name">按姓名排序</option>
-                                    <option value="callCount">按点名次数排序</option>
-                                    <option value="lastCalled">按最后点名时间排序</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="students-list" id="studentsList">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-content" id="statistics-tab">
-                <div class="statistics-section">
-                    <div class="section-header">
-                        <h2>点名统计分析</h2>
-                        <div class="time-range-selector">
-                            <select id="timeRange">
-                                <option value="7">最近7天</option>
-                                <option value="30" selected>最近30天</option>
-                                <option value="90">最近90天</option>
-                                <option value="all">全部时间</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="statistics-content">
-                        <div class="stats-cards">
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="fas fa-users"></i>
+                        <div class="settings-content">
+                            <div class="settings-group card">
+                                <h3>点名设置</h3>
+                                <div class="setting-item">
+                                    <label>滚动动画时长</label>
+                                    <input type="range" id="animationDuration" class="form-control" min="1000" max="5000" value="2000">
+                                    <span id="durationValue">2秒</span>
                                 </div>
-                                <div class="stat-info">
-                                    <div class="stat-number" id="totalStudents">0</div>
-                                    <div class="stat-label">总学生数</div>
+                                <div class="setting-item">
+                                    <label>滚动速度</label>
+                                    <input type="range" id="scrollSpeed" class="form-control" min="10" max="100" value="50">
+                                    <span id="speedValue">中等</span>
+                                </div>
+                                <div class="setting-item">
+                                    <label>
+                                        <input type="checkbox" id="avoidImmediateRepeat">
+                                        避免连续点名同一人
+                                    </label>
                                 </div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="fas fa-hand-pointer"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <div class="stat-number" id="totalCalls">0</div>
-                                    <div class="stat-label">总点名次数</div>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <div class="stat-number" id="avgCallsPerStudent">0</div>
-                                    <div class="stat-label">人均被点名次数</div>
+                            <div class="settings-group card">
+                                <h3>界面设置</h3>
+                                <div class="setting-item">
+                                    <label>主题色彩</label>
+                                    <div class="theme-colors">
+                                        <button class="theme-color active" data-theme="blue" style="background: #3b82f6;"></button>
+                                        <button class="theme-color" data-theme="green" style="background: #10b981;"></button>
+                                        <button class="theme-color" data-theme="purple" style="background: #8b5cf6;"></button>
+                                        <button class="theme-color" data-theme="orange" style="background: #f59e0b;"></button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-icon">
-                                    <i class="fas fa-star"></i>
+                            <div class="settings-group card">
+                                <h3>数据管理</h3>
+                                <div class="setting-item">
+                                    <button id="backupDataBtn" class="btn btn-outline">
+                                        <i class="fas fa-download"></i>
+                                        备份数据
+                                    </button>
+                                    <button id="restoreDataBtn" class="btn btn-outline">
+                                        <i class="fas fa-upload"></i>
+                                        恢复数据
+                                    </button>
+                                    <button id="clearDataBtn" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                        清空数据
+                                    </button>
                                 </div>
-                                <div class="stat-info">
-                                    <div class="stat-number" id="mostCalledStudent">-</div>
-                                    <div class="stat-label">被点最多学生</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <div class="chart-header">
-                                <h3>学生点名频率统计</h3>
-                                <button id="exportStatsBtn" class="btn btn-outline btn-small">
-                                    <i class="fas fa-download"></i>
-                                    导出报表
-                                </button>
-                            </div>
-                            <div class="chart" id="frequencyChart">
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="tab-content" id="settings-tab">
-                <div class="settings-section">
-                    <div class="section-header">
-                        <h2>系统设置</h2>
-                    </div>
-                    <div class="settings-content">
-                        <div class="settings-group">
-                            <h3>点名设置</h3>
-                            <div class="setting-item">
-                                <label>滚动动画时长</label>
-                                <input type="range" id="animationDuration" min="1000" max="5000" value="2000">
-                                <span id="durationValue">2秒</span>
-                            </div>
-                            <div class="setting-item">
-                                <label>滚动速度</label>
-                                <input type="range" id="scrollSpeed" min="10" max="100" value="50">
-                                <span id="speedValue">中等</span>
-                            </div>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="avoidImmediateRepeat">
-                                    避免连续点名同一人
-                                </label>
-                            </div>
-                        </div>
-                        <div class="settings-group">
-                            <h3>界面设置</h3>
-                            <div class="setting-item">
-                                <label>主题色彩</label>
-                                <div class="theme-colors">
-                                    <button class="theme-color active" data-theme="blue" style="background: #3b82f6;"></button>
-                                    <button class="theme-color" data-theme="green" style="background: #10b981;"></button>
-                                    <button class="theme-color" data-theme="purple" style="background: #8b5cf6;"></button>
-                                    <button class="theme-color" data-theme="orange" style="background: #f59e0b;"></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="settings-group">
-                            <h3>数据管理</h3>
-                            <div class="setting-item">
-                                <button id="backupDataBtn" class="btn btn-outline">
-                                    <i class="fas fa-download"></i>
-                                    备份数据
-                                </button>
-                                <button id="restoreDataBtn" class="btn btn-outline">
-                                    <i class="fas fa-upload"></i>
-                                    恢复数据
-                                </button>
-                                <button id="clearDataBtn" class="btn btn-danger">
-                                    <i class="fas fa-trash"></i>
-                                    清空数据
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </section>
             </div>
         </main>
     </div>
 
+    <!-- 模态框 -->
     <div id="modalOverlay" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -283,6 +305,7 @@
         </div>
     </div>
 
+    <!-- 加载遮罩 -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner"></div>
@@ -290,8 +313,10 @@
         </div>
     </div>
 
+    <!-- 通知容器 -->
     <div id="notificationContainer" class="notification-container"></div>
 
+    <!-- JavaScript 文件 -->
     <script src="./js/storage.js"></script>
     <script src="./js/algorithms.js"></script>
     <script src="./js/animations.js"></script>

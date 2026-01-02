@@ -1,60 +1,629 @@
 /* 动画效果样式 */
 
-/* 随机滚动动画 */
+/* 智能滚动动画 */
 .student-scroll.rolling .scroll-content {
-    animation: rollNames 0.1s linear infinite;
+    animation: smartRollNames 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
 }
 
-@keyframes rollNames {
+@keyframes smartRollNames {
     0% {
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
+        filter: brightness(1) blur(0px);
+    }
+    25% {
+        transform: translateY(-25px) scale(1.05);
+        filter: brightness(1.1) blur(0.5px);
+    }
+    50% {
+        transform: translateY(-50px) scale(0.98);
+        filter: brightness(0.95) blur(0px);
+    }
+    75% {
+        transform: translateY(-75px) scale(1.02);
+        filter: brightness(1.05) blur(0.3px);
     }
     100% {
-        transform: translateY(-40px);
+        transform: translateY(-100px) scale(1);
+        filter: brightness(1) blur(0px);
     }
 }
 
-/* 滚动过程中的名字显示效果 */
+/* 减速滚动效果 */
+.student-scroll.slowing .scroll-content {
+    animation: slowDownRoll 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes slowDownRoll {
+    0% {
+        transform: translateY(-100px) scale(1);
+        filter: brightness(1) blur(0px);
+    }
+    15% {
+        transform: translateY(-85px) scale(1.02);
+        filter: brightness(1.1) blur(0.3px);
+    }
+    30% {
+        transform: translateY(-70px) scale(1.01);
+        filter: brightness(1.05) blur(0.2px);
+    }
+    45% {
+        transform: translateY(-55px) scale(1);
+        filter: brightness(1) blur(0px);
+    }
+    60% {
+        transform: translateY(-40px) scale(0.99);
+        filter: brightness(0.98) blur(0px);
+    }
+    75% {
+        transform: translateY(-25px) scale(1.005);
+        filter: brightness(1.02) blur(0px);
+    }
+    90% {
+        transform: translateY(-10px) scale(1.01);
+        filter: brightness(1.05) blur(0px);
+    }
+    100% {
+        transform: translateY(0) scale(1.1);
+        filter: brightness(1.2) blur(0px);
+    }
+}
+
+/* 优化的名字切换效果 */
 .student-scroll.rolling .student-name {
-    animation: nameShuffle 0.1s linear infinite;
+    animation: enhancedNameShuffle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
 }
 
-@keyframes nameShuffle {
+@keyframes enhancedNameShuffle {
     0% {
-        opacity: 1;
-        transform: scale(1);
+        opacity: 0.2;
+        transform: translateY(30px) scale(0.85);
+        filter: blur(2px) brightness(0.7);
+    }
+    25% {
+        opacity: 0.5;
+        transform: translateY(15px) scale(0.92);
+        filter: blur(1px) brightness(0.85);
     }
     50% {
-        opacity: 0.8;
-        transform: scale(1.02);
+        opacity: 1;
+        transform: translateY(0) scale(1.05);
+        filter: blur(0px) brightness(1.2);
+    }
+    75% {
+        opacity: 0.7;
+        transform: translateY(-15px) scale(0.98);
+        filter: blur(0.5px) brightness(1.05);
     }
     100% {
-        opacity: 1;
-        transform: scale(1);
+        opacity: 0.3;
+        transform: translateY(-30px) scale(0.88);
+        filter: blur(1.5px) brightness(0.8);
     }
 }
 
-/* 选中结果揭晓动画 */
-.student-name.selected {
-    animation: nameReveal 0.8s ease-out;
+/* 暂停时的名字效果 */
+.student-scroll.paused .student-name {
+    animation: pauseEffect 0.3s ease-out;
 }
 
-@keyframes nameReveal {
+@keyframes pauseEffect {
     0% {
-        transform: scale(0.5) rotate(-10deg);
-        opacity: 0;
-        filter: blur(10px);
+        transform: scale(1);
+        filter: blur(0px);
     }
     50% {
-        transform: scale(1.1) rotate(5deg);
-        opacity: 0.8;
-        filter: blur(2px);
+        transform: scale(1.05);
+        filter: blur(1px);
+    }
+    100% {
+        transform: scale(1);
+        filter: blur(0px);
+    }
+}
+
+/* 戏剧性的选中结果揭晓动画 */
+.student-name.selected {
+    animation: dramaticReveal 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes dramaticReveal {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+        filter: blur(15px) brightness(0.5);
+        text-shadow: none;
+    }
+    20% {
+        transform: scale(0.3) rotate(-90deg);
+        opacity: 0.3;
+        filter: blur(12px) brightness(0.7);
+    }
+    40% {
+        transform: scale(0.7) rotate(-45deg);
+        opacity: 0.6;
+        filter: blur(8px) brightness(0.9);
+    }
+    60% {
+        transform: scale(1.2) rotate(10deg);
+        opacity: 0.9;
+        filter: blur(3px) brightness(1.3);
+    }
+    80% {
+        transform: scale(1.05) rotate(-2deg);
+        opacity: 1;
+        filter: blur(1px) brightness(1.1);
     }
     100% {
         transform: scale(1) rotate(0deg);
         opacity: 1;
-        filter: blur(0);
+        filter: blur(0px) brightness(1);
+        text-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4);
     }
+}
+
+/* 选中名字的光晕效果 */
+.student-name.selected::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: glowPulse 1.2s ease-out;
+    z-index: -1;
+}
+
+@keyframes glowPulse {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    30% {
+        transform: scale(0.8);
+        opacity: 0.6;
+    }
+    60% {
+        transform: scale(1.2);
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.2;
+    }
+}
+
+/* 选中名字的边框光效 */
+.student-name.selected::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #3b82f6, #06b6d4, #8b5cf6, #3b82f6);
+    border-radius: inherit;
+    background-size: 400% 400%;
+    animation: borderGlow 2s ease-in-out infinite;
+    z-index: -1;
+    opacity: 0;
+}
+
+@keyframes borderGlow {
+    0%, 100% {
+        background-position: 0% 50%;
+        opacity: 0.8;
+    }
+    50% {
+        background-position: 100% 50%;
+        opacity: 1;
+    }
+}
+
+/* 容器背景特效增强 */
+.display-container.revealing {
+    animation: containerReveal 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes containerReveal {
+    0% {
+        background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+        transform: scale(1);
+    }
+    50% {
+        background: radial-gradient(circle at center, rgba(59, 130, 246, 0.2) 0%, transparent 60%);
+        transform: scale(1.05);
+    }
+    100% {
+        background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+        transform: scale(1);
+    }
+}
+
+/* 粒子效果 */
+.particle-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, #3b82f6, transparent);
+    border-radius: 50%;
+    animation: particleFloat 2s ease-out forwards;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(0) scale(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-200px) scale(0);
+        opacity: 0;
+    }
+}
+
+/* 彩虹光谱效果 */
+.rainbow-spectrum {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 300%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 0, 0, 0.3),
+        rgba(255, 127, 0, 0.3),
+        rgba(255, 255, 0, 0.3),
+        rgba(0, 255, 0, 0.3),
+        rgba(0, 0, 255, 0.3),
+        rgba(75, 0, 130, 0.3),
+        rgba(238, 130, 238, 0.3),
+        transparent
+    );
+    animation: spectrumSweep 2s ease-in-out;
+    z-index: 1;
+}
+
+@keyframes spectrumSweep {
+    0% {
+        left: -100%;
+    }
+    50% {
+        left: 0%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* 音频波形效果 */
+.audio-wave {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2px;
+    z-index: 3;
+}
+
+.audio-bar {
+    width: 3px;
+    background: linear-gradient(to top, #3b82f6, #06b6d4);
+    border-radius: 2px;
+    animation: audioViz 1.5s ease-in-out infinite;
+}
+
+.audio-bar:nth-child(1) { animation-delay: 0s; height: 20px; }
+.audio-bar:nth-child(2) { animation-delay: 0.1s; height: 30px; }
+.audio-bar:nth-child(3) { animation-delay: 0.2s; height: 25px; }
+.audio-bar:nth-child(4) { animation-delay: 0.3s; height: 35px; }
+.audio-bar:nth-child(5) { animation-delay: 0.4s; height: 40px; }
+.audio-bar:nth-child(6) { animation-delay: 0.5s; height: 35px; }
+.audio-bar:nth-child(7) { animation-delay: 0.6s; height: 25px; }
+.audio-bar:nth-child(8) { animation-delay: 0.7s; height: 30px; }
+
+@keyframes audioViz {
+    0%, 100% {
+        transform: scaleY(0.3);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+/* 弹性弹跳效果 */
+.bounce-effect {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1) rotate(-10deg);
+        opacity: 0.8;
+    }
+    70% {
+        transform: scale(0.9) rotate(5deg);
+        opacity: 0.9;
+    }
+    90% {
+        transform: scale(1.05) rotate(-2deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* 震动效果 */
+.shake-effect {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+/* 页面加载动画 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* 标签页切换动画 */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.tab-content.active {
+    animation: slideIn 0.4s ease-out;
+}
+
+/* 表单元素交互反馈 */
+@keyframes inputFocus {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.25);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+    }
+    100% {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+}
+
+input:focus, select:focus, textarea:focus {
+    animation: inputFocus 0.3s ease-out;
+}
+
+/* 卡片悬停增强效果 */
+@keyframes cardHover {
+    from {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    to {
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    }
+}
+
+.card:hover {
+    animation: cardHover 0.3s ease-out forwards;
+}
+
+/* 加载动画 */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 0.8s ease-in-out infinite;
+}
+
+/* 按钮点击涟漪效果 */
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn:active::after {
+    animation: ripple 0.6s ease-out;
+}
+
+/* 数字增长动画 */
+@keyframes countUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-number {
+    animation: countUp 0.8s ease-out;
+}
+
+/* 悬停缩放效果 */
+@keyframes hoverScale {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(1.05);
+    }
+}
+
+.stat-icon:hover {
+    animation: hoverScale 0.3s ease-out forwards;
+}
+
+/* 平滑过渡效果 */
+.smooth-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 背景渐变动画 */
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.gradient-shift {
+    background-size: 200% 200%;
+    animation: gradientShift 5s ease infinite;
+}
+
+/* 悬停提示动画 */
+@keyframes tooltipFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--primary-dark);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+    animation: tooltipFade 0.3s ease-out;
+}
+
+/* 进度条动画 */
+@keyframes progressBar {
+    from {
+        width: 0%;
+    }
+    to {
+        width: var(--progress-width, 100%);
+    }
+}
+
+.progress-bar {
+    height: 4px;
+    background: var(--primary-color);
+    border-radius: 2px;
+    animation: progressBar 1s ease-out forwards;
+}    }
 }
 
 /* 结果揭晓背景特效 */
