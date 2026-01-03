@@ -201,14 +201,50 @@
                                     </div>
                                 </div>
                                 <div class="stat-card card">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <div class="stat-number" id="mostCalledStudent">-</div>
-                                        <div class="stat-label">被点最多学生</div>
-                                    </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
                                 </div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="mostCalledStudent">-</div>
+                                    <div class="stat-label">被点最多学生</div>
+                                </div>
+                            </div>
+                            <div class="stat-card card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-award"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="leastCalledStudent">-</div>
+                                    <div class="stat-label">被点最少学生</div>
+                                </div>
+                            </div>
+                            <div class="stat-card card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-user-slash"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="neverCalledCount">0</div>
+                                    <div class="stat-label">未被点名学生</div>
+                                </div>
+                            </div>
+                            <div class="stat-card card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="attendanceRate">0%</div>
+                                    <div class="stat-label">点名出勤率</div>
+                                </div>
+                            </div>
+                            <div class="stat-card card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="lastActiveDate">-</div>
+                                    <div class="stat-label">最近活跃日期</div>
+                                </div>
+                            </div>
                             </div>
                             <div class="chart-container card">
                                 <div class="chart-header">
@@ -219,6 +255,42 @@
                                     </button>
                                 </div>
                                 <div class="chart" id="frequencyChart">
+                                </div>
+                            </div>
+                            
+                            <!-- 新增：时间段分布统计图表 -->
+                            <div class="chart-container card">
+                                <div class="chart-header">
+                                    <h3>时间段分布统计</h3>
+                                </div>
+                                <div class="chart" id="dailyDistributionChart">
+                                </div>
+                            </div>
+                            
+                            <!-- 新增：算法使用情况图表 -->
+                            <div class="chart-container card">
+                                <div class="chart-header">
+                                    <h3>算法使用情况</h3>
+                                </div>
+                                <div class="chart" id="algorithmUsageChart">
+                                </div>
+                            </div>
+                            
+                            <!-- 新增：学生点名比例饼图 -->
+                            <div class="chart-container card">
+                                <div class="chart-header">
+                                    <h3>学生点名比例</h3>
+                                </div>
+                                <div class="chart" id="callProportionChart">
+                                </div>
+                            </div>
+                            
+                            <!-- 新增：每日点名趋势折线图 -->
+                            <div class="chart-container card">
+                                <div class="chart-header">
+                                    <h3>每日点名趋势</h3>
+                                </div>
+                                <div class="chart" id="dailyTrendChart">
                                 </div>
                             </div>
                         </div>

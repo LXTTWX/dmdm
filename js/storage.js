@@ -641,6 +641,8 @@ class StorageManager {
 
         let mostCalledStudent = '-';
         let maxCalls = 0;
+        let leastCalledStudent = '-';
+        let minCalls = Infinity;
 
         Object.entries(studentCallCounts).forEach(([studentId, count]) => {
             if (count > maxCalls) {
@@ -650,14 +652,48 @@ class StorageManager {
                     mostCalledStudent = student.name;
                 }
             }
+            if (count < minCalls) {
+                minCalls = count;
+                const student = students.find(s => s.id === parseInt(studentId));
+                if (student) {
+                    leastCalledStudent = student.name;
+                }
+            }
         });
+
+        // 计算未被点名的学生数
+        const calledStudentIds = new Set(Object.keys(studentCallCounts).map(id => parseInt(id)));
+        const neverCalledCount = students.filter(student => !calledStudentIds.has(student.id)).length;
+
+        // 计算点名出勤率
+        const attendanceRate = totalStudents > 0 ? Math.round((calledStudentIds.size / totalStudents) * 100) : 0;
+
+        // 计算最近活跃日期
+        let lastActiveDate = '-';
+        if (records.length > 0) {
+            const sortedRecords = [...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            lastActiveDate = new Date(sortedRecords[0].timestamp).toLocaleDateString('zh-CN');
+        }
+
+        // 新增：时间段分布统计（按天）
+        const dailyDistribution = this.calculateDailyDistribution(records, timeRange);
+        
+        // 新增：算法使用情况分析
+        const algorithmUsage = this.calculateAlgorithmUsage(records);
 
         return {
             totalStudents,
             totalCalls,
             avgCallsPerStudent: parseFloat(avgCallsPerStudent),
             mostCalledStudent,
-            maxCalls
+            leastCalledStudent,
+            maxCalls,
+            minCalls: minCalls === Infinity ? 0 : minCalls,
+            neverCalledCount,
+            attendanceRate,
+            lastActiveDate,
+            dailyDistribution,
+            algorithmUsage
         };
     }
 
@@ -832,6 +868,92 @@ class StorageManager {
         });
 
         return students;
+    }
+
+    /**
+     * 计算时间段分布统计
+     * @param {Array} records - 点名记录数组
+     * @param {string} timeRange - 时间范围（天数或'all'）
+     * @returns {Object} 按天分布的统计数据
+     */
+    calculateDailyDistribution(records, timeRange) {
+        const distribution = {};
+        const today = new Date();
+        
+        // 确定起始日期
+        let startDate;
+        if (timeRange !== 'all') {
+            startDate = new Date();
+            startDate.setDate(today.getDate() - parseInt(timeRange));
+        } else {
+            // 如果是全部记录，找最早的记录日期
+            if (records.length > 0) {
+                startDate = new Date(Math.min(...records.map(r => new Date(r.timestamp))));
+            } else {
+                startDate = new Date();
+            }
+        }
+        
+        // 初始化日期数组
+        const currentDate = new Date(startDate);
+        while (currentDate <= today) {
+            const dateKey = currentDate.toISOString().split('T')[0];
+            distribution[dateKey] = 0;
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // 统计每天的点名次数
+        records.forEach(record => {
+            const recordDate = new Date(record.timestamp);
+            const dateKey = recordDate.toISOString().split('T')[0];
+            if (distribution[dateKey] !== undefined) {
+                distribution[dateKey]++;
+            }
+        });
+        
+        // 转换为数组格式以便图表使用
+        return Object.entries(distribution).map(([date, count]) => {
+            return {
+                date,
+                count,
+                formattedDate: this.formatDate(date)
+            };
+        });
+    }
+    
+    /**
+     * 计算算法使用情况
+     * @param {Array} records - 点名记录数组
+     * @returns {Object} 算法使用统计数据
+     */
+    calculateAlgorithmUsage(records) {
+        const algorithmStats = {};
+        let totalCalls = records.length;
+        
+        // 统计各算法使用次数
+        records.forEach(record => {
+            const algorithm = record.algorithm || 'default';
+            algorithmStats[algorithm] = (algorithmStats[algorithm] || 0) + 1;
+        });
+        
+        // 转换为数组格式并计算百分比
+        return Object.entries(algorithmStats).map(([algorithm, count]) => {
+            return {
+                algorithm,
+                count,
+                percentage: totalCalls > 0 ? Math.round((count / totalCalls) * 100) : 0
+            };
+        }).sort((a, b) => b.count - a.count);
+    }
+    
+    /**
+     * 格式化日期
+     * @param {string} dateString - ISO日期字符串
+     * @returns {string} 格式化后的日期
+     */
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return `${date.getMonth() + 1}/${date.getDate()}`;
     }
 }
 

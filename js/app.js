@@ -459,9 +459,17 @@ class RollCallApp {
             document.getElementById('totalCalls').textContent = stats.totalCalls;
             document.getElementById('avgCallsPerStudent').textContent = stats.avgCallsPerStudent;
             document.getElementById('mostCalledStudent').textContent = stats.mostCalledStudent;
+            document.getElementById('leastCalledStudent').textContent = stats.leastCalledStudent;
+            document.getElementById('neverCalledCount').textContent = stats.neverCalledCount;
+            document.getElementById('attendanceRate').textContent = `${stats.attendanceRate}%`;
+            document.getElementById('lastActiveDate').textContent = stats.lastActiveDate;
             
-            // 更新频率图表
+            // 更新所有图表
             await this.updateFrequencyChart();
+            await this.updateDailyDistributionChart();
+            await this.updateAlgorithmUsageChart();
+            await this.updateCallProportionChart();
+            await this.updateDailyTrendChart();
         } catch (error) {
             console.error('更新统计数据失败:', error);
         }
@@ -505,6 +513,461 @@ class RollCallApp {
             }
         } catch (error) {
             console.error('更新频率图表失败:', error);
+        }
+    }
+    
+    /**
+     * 更新时间段分布图表
+     */
+    async updateDailyDistributionChart() {
+        if (!this.currentClassId) return;
+        
+        try {
+            const timeRange = document.getElementById('timeRange')?.value || '30';
+            const stats = await window.storageManager.getClassStatistics(this.currentClassId, timeRange);
+            const dailyDistribution = stats.dailyDistribution;
+            
+            const chartContainer = document.getElementById('dailyDistributionChart');
+            if (!chartContainer) return;
+            
+            // 清空现有内容
+            chartContainer.innerHTML = '';
+            
+            // 创建时间段分布图表
+            if (dailyDistribution.length > 0) {
+                const maxCount = Math.max(...dailyDistribution.map(d => d.count), 1);
+                
+                dailyDistribution.forEach(data => {
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    bar.innerHTML = `
+                        <div class="bar-label">${data.formattedDate}</div>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${(data.count / maxCount * 100)}%"></div>
+                            <div class="bar-value">${data.count}次</div>
+                        </div>
+                    `;
+                    chartContainer.appendChild(bar);
+                });
+            } else {
+                chartContainer.innerHTML = '<div class="empty-state">暂无数据</div>';
+            }
+        } catch (error) {
+            console.error('更新时间段分布图表失败:', error);
+        }
+    }
+    
+    /**
+     * 更新算法使用情况图表
+     */
+    async updateAlgorithmUsageChart() {
+        if (!this.currentClassId) return;
+        
+        try {
+            const timeRange = document.getElementById('timeRange')?.value || '30';
+            const stats = await window.storageManager.getClassStatistics(this.currentClassId, timeRange);
+            const algorithmUsage = stats.algorithmUsage;
+            
+            const chartContainer = document.getElementById('algorithmUsageChart');
+            if (!chartContainer) return;
+            
+            // 清空现有内容
+            chartContainer.innerHTML = '';
+            
+            // 创建算法使用情况图表
+            if (algorithmUsage.length > 0) {
+                algorithmUsage.forEach(data => {
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    bar.innerHTML = `
+                        <div class="bar-label">${this.getAlgorithmName(data.algorithm)}</div>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${data.percentage}%">
+                            </div>
+                            <div class="bar-value">${data.percentage}%</div>
+                        </div>
+                    `;
+                    chartContainer.appendChild(bar);
+                });
+            } else {
+                chartContainer.innerHTML = '<div class="empty-state">暂无数据</div>';
+            }
+        } catch (error) {
+            console.error('更新算法使用情况图表失败:', error);
+        }
+    }
+    
+    /**
+     * 更新学生点名比例饼图
+     */
+    async updateCallProportionChart() {
+        if (!this.currentClassId) return;
+        
+        try {
+            const timeRange = document.getElementById('timeRange')?.value || '30';
+            const frequencyData = await window.storageManager.getStudentFrequencyData(this.currentClassId, timeRange);
+            
+            const chartContainer = document.getElementById('callProportionChart');
+            if (!chartContainer) return;
+            
+            // 清空现有内容
+            chartContainer.innerHTML = '';
+            
+            if (frequencyData.length > 0) {
+                // 按点名次数分组
+                const groups = {
+                    never: 0, // 未被点名
+                    low: 0,   // 1-2次
+                    medium: 0, // 3-5次
+                    high: 0   // 5次以上
+                };
+                
+                frequencyData.forEach(student => {
+                    if (student.callCount === 0) {
+                        groups.never++;
+                    } else if (student.callCount <= 2) {
+                        groups.low++;
+                    } else if (student.callCount <= 5) {
+                        groups.medium++;
+                    } else {
+                        groups.high++;
+                    }
+                });
+                
+                // 计算每个分组的百分比
+                const totalStudents = frequencyData.length;
+                const groupData = [
+                    { name: '未被点名', count: groups.never, percentage: Math.round((groups.never / totalStudents) * 100), color: '#ef4444' },
+                    { name: '1-2次', count: groups.low, percentage: Math.round((groups.low / totalStudents) * 100), color: '#f59e0b' },
+                    { name: '3-5次', count: groups.medium, percentage: Math.round((groups.medium / totalStudents) * 100), color: '#3b82f6' },
+                    { name: '5次以上', count: groups.high, percentage: Math.round((groups.high / totalStudents) * 100), color: '#10b981' }
+                ].filter(group => group.count > 0);
+                
+                // 创建饼图容器
+                const pieChart = document.createElement('div');
+                pieChart.className = 'pie-chart-container';
+                
+                // 创建SVG饼图
+                const svgWidth = 300;
+                const svgHeight = 300;
+                const radius = Math.min(svgWidth, svgHeight) / 2 - 20;
+                
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', svgWidth);
+                svg.setAttribute('height', svgHeight);
+                svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+                
+                const centerX = svgWidth / 2;
+                const centerY = svgHeight / 2;
+                
+                let startAngle = 0;
+                
+                groupData.forEach((group, index) => {
+                    const sliceAngle = (group.percentage / 100) * 2 * Math.PI;
+                    const endAngle = startAngle + sliceAngle;
+                    
+                    // 计算弧的起点和终点
+                    const x1 = centerX + radius * Math.cos(startAngle);
+                    const y1 = centerY + radius * Math.sin(startAngle);
+                    const x2 = centerX + radius * Math.cos(endAngle);
+                    const y2 = centerY + radius * Math.sin(endAngle);
+                    
+                    // 大弧标志
+                    const largeArcFlag = sliceAngle > Math.PI ? 1 : 0;
+                    
+                    // 创建路径
+                    const pathData = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', pathData);
+                    path.setAttribute('fill', group.color);
+                    path.setAttribute('stroke', '#fff');
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('class', 'pie-slice');
+                    
+                    // 添加悬停效果
+                    path.addEventListener('mouseenter', () => {
+                        path.setAttribute('opacity', '0.8');
+                    });
+                    path.addEventListener('mouseleave', () => {
+                        path.setAttribute('opacity', '1');
+                    });
+                    
+                    svg.appendChild(path);
+                    
+                    // 更新起始角度
+                    startAngle = endAngle;
+                });
+                
+                pieChart.appendChild(svg);
+                
+                // 创建图例
+                const legend = document.createElement('div');
+                legend.className = 'pie-legend';
+                
+                groupData.forEach(group => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'legend-color';
+                    colorBox.style.backgroundColor = group.color;
+                    
+                    const legendText = document.createElement('div');
+                    legendText.className = 'legend-text';
+                    legendText.textContent = `${group.name}: ${group.count}人 (${group.percentage}%)`;
+                    
+                    legendItem.appendChild(colorBox);
+                    legendItem.appendChild(legendText);
+                    legend.appendChild(legendItem);
+                });
+                
+                pieChart.appendChild(legend);
+                chartContainer.appendChild(pieChart);
+            } else {
+                chartContainer.innerHTML = '<div class="empty-state">暂无数据</div>';
+            }
+        } catch (error) {
+            console.error('更新学生点名比例饼图失败:', error);
+        }
+    }
+    
+    /**
+     * 更新每日点名趋势折线图
+     */
+    async updateDailyTrendChart() {
+        if (!this.currentClassId) return;
+        
+        try {
+            const timeRange = document.getElementById('timeRange')?.value || '30';
+            const stats = await window.storageManager.getClassStatistics(this.currentClassId, timeRange);
+            const dailyDistribution = stats.dailyDistribution;
+            
+            const chartContainer = document.getElementById('dailyTrendChart');
+            if (!chartContainer) return;
+            
+            // 清空现有内容
+            chartContainer.innerHTML = '';
+            
+            if (dailyDistribution.length > 0) {
+                // 创建折线图容器
+                const lineChart = document.createElement('div');
+                lineChart.className = 'line-chart-container';
+                
+                // 设置图表尺寸
+                const chartWidth = 600;
+                const chartHeight = 300;
+                const padding = 40;
+                const innerWidth = chartWidth - padding * 2;
+                const innerHeight = chartHeight - padding * 2;
+                
+                // 计算数据范围
+                const maxCount = Math.max(...dailyDistribution.map(d => d.count), 1);
+                const minDate = new Date(dailyDistribution[0].date);
+                const maxDate = new Date(dailyDistribution[dailyDistribution.length - 1].date);
+                
+                // 创建SVG
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', chartWidth);
+                svg.setAttribute('height', chartHeight);
+                
+                // 创建网格线
+                const gridLines = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                gridLines.setAttribute('class', 'grid-lines');
+                
+                // 水平网格线
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (innerHeight / 5) * i;
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', padding);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('x2', chartWidth - padding);
+                    line.setAttribute('y2', y);
+                    line.setAttribute('stroke', '#e5e7eb');
+                    line.setAttribute('stroke-width', '1');
+                    line.setAttribute('stroke-dasharray', '4,4');
+                    gridLines.appendChild(line);
+                    
+                    // 添加Y轴刻度
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', padding - 10);
+                    label.setAttribute('y', y + 5);
+                    label.setAttribute('text-anchor', 'end');
+                    label.setAttribute('font-size', '12');
+                    label.setAttribute('fill', '#6b7280');
+                    label.textContent = Math.round(maxCount - (maxCount / 5) * i);
+                    svg.appendChild(label);
+                }
+                
+                svg.appendChild(gridLines);
+                
+                // 创建折线
+                const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                
+                let pathData = `M ${padding} ${padding + innerHeight - (dailyDistribution[0].count / maxCount) * innerHeight}`;
+                
+                dailyDistribution.forEach((day, index) => {
+                    if (index > 0) {
+                        const x = padding + (index / (dailyDistribution.length - 1)) * innerWidth;
+                        const y = padding + innerHeight - (day.count / maxCount) * innerHeight;
+                        pathData += ` L ${x} ${y}`;
+                    }
+                });
+                
+                linePath.setAttribute('d', pathData);
+                linePath.setAttribute('fill', 'none');
+                linePath.setAttribute('stroke', '#3b82f6');
+                linePath.setAttribute('stroke-width', '3');
+                svg.appendChild(linePath);
+                
+                // 创建数据点
+                const dataPoints = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                dataPoints.setAttribute('class', 'data-points');
+                
+                dailyDistribution.forEach((day, index) => {
+                    const x = padding + (index / (dailyDistribution.length - 1)) * innerWidth;
+                    const y = padding + innerHeight - (day.count / maxCount) * innerHeight;
+                    
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', '5');
+                    circle.setAttribute('fill', '#3b82f6');
+                    circle.setAttribute('stroke', '#fff');
+                    circle.setAttribute('stroke-width', '2');
+                    
+                    // 添加悬停效果
+                    circle.addEventListener('mouseenter', () => {
+                        circle.setAttribute('r', '7');
+                        circle.setAttribute('opacity', '0.8');
+                    });
+                    circle.addEventListener('mouseleave', () => {
+                        circle.setAttribute('r', '5');
+                        circle.setAttribute('opacity', '1');
+                    });
+                    
+                    dataPoints.appendChild(circle);
+                });
+                
+                svg.appendChild(dataPoints);
+                
+                // 添加X轴标签
+                const xAxisLabels = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                xAxisLabels.setAttribute('class', 'x-axis-labels');
+                
+                // 只显示部分日期标签，避免拥挤
+                const maxLabels = 6;
+                const labelStep = Math.ceil(dailyDistribution.length / maxLabels);
+                
+                dailyDistribution.forEach((day, index) => {
+                    if (index % labelStep === 0 || index === dailyDistribution.length - 1) {
+                        const x = padding + (index / (dailyDistribution.length - 1)) * innerWidth;
+                        const y = chartHeight - padding + 20;
+                        
+                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        label.setAttribute('x', x);
+                        label.setAttribute('y', y);
+                        label.setAttribute('text-anchor', 'middle');
+                        label.setAttribute('font-size', '12');
+                        label.setAttribute('fill', '#6b7280');
+                        label.setAttribute('transform', `rotate(-45 ${x} ${y})`);
+                        label.textContent = day.formattedDate;
+                        
+                        xAxisLabels.appendChild(label);
+                    }
+                });
+                
+                svg.appendChild(xAxisLabels);
+                
+                lineChart.appendChild(svg);
+                chartContainer.appendChild(lineChart);
+            } else {
+                chartContainer.innerHTML = '<div class="empty-state">暂无数据</div>';
+            }
+        } catch (error) {
+            console.error('更新每日点名趋势折线图失败:', error);
+        }
+    }
+    
+    /**
+     * 获取算法的中文名称
+     * @param {string} algorithm - 算法英文名称
+     * @returns {string} 算法中文名称
+     */
+    getAlgorithmName(algorithm) {
+        const algorithmNames = {
+            'fair': '公平算法',
+            'weighted': '加权算法',
+            'random': '随机算法',
+            'default': '默认算法'
+        };
+        return algorithmNames[algorithm] || algorithm;
+    }
+    
+    /**
+     * 导出统计数据为CSV格式
+     */
+    async exportStatistics() {
+        if (!this.currentClassId) {
+            this.showNotification('请先选择班级', 'warning');
+            return;
+        }
+        
+        try {
+            const timeRange = document.getElementById('timeRange')?.value || '30';
+            const stats = await window.storageManager.getClassStatistics(this.currentClassId, timeRange);
+            const frequencyData = await window.storageManager.getStudentFrequencyData(this.currentClassId, timeRange);
+            
+            // 构建CSV内容
+            let csvContent = '数据类型,名称,数值\n';
+            
+            // 基本统计信息
+            csvContent += '基本统计,总学生数,' + stats.totalStudents + '\n';
+            csvContent += '基本统计,总点名次数,' + stats.totalCalls + '\n';
+            csvContent += '基本统计,平均每人点名次数,' + stats.avgCallsPerStudent + '\n';
+            csvContent += '基本统计,被点名最多的学生,' + stats.mostCalledStudent + '\n';
+            csvContent += '基本统计,被点名最少的学生,' + stats.leastCalledStudent + '\n';
+            csvContent += '基本统计,最高点名次数,' + stats.maxCalls + '\n';
+            csvContent += '基本统计,最低点名次数,' + stats.minCalls + '\n';
+            csvContent += '基本统计,未被点名学生数,' + stats.neverCalledCount + '\n';
+            csvContent += '基本统计,点名出勤率,' + stats.attendanceRate + '%\n';
+            csvContent += '基本统计,最近活跃日期,' + stats.lastActiveDate + '\n';
+            
+            // 学生点名频率
+            csvContent += '\n学生点名频率,姓名,点名次数,占比\n';
+            frequencyData.forEach(student => {
+                csvContent += '学生点名频率,' + student.name + ',' + student.callCount + ',' + student.percentage + '%\n';
+            });
+            
+            // 每日分布
+            csvContent += '\n每日分布,日期,点名次数\n';
+            stats.dailyDistribution.forEach(day => {
+                csvContent += '每日分布,' + day.date + ',' + day.count + '\n';
+            });
+            
+            // 算法使用情况
+            csvContent += '\n算法使用情况,算法名称,使用次数,占比\n';
+            stats.algorithmUsage.forEach(algorithm => {
+                csvContent += '算法使用情况,' + this.getAlgorithmName(algorithm.algorithm) + ',' + algorithm.count + ',' + algorithm.percentage + '%\n';
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `点名统计_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            // 触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            this.showNotification('统计数据已导出', 'success');
+        } catch (error) {
+            console.error('导出统计数据失败:', error);
+            this.showNotification('导出统计数据失败', 'error');
         }
     }
 
@@ -657,6 +1120,11 @@ class RollCallApp {
         
         document.getElementById('modalConfirm').addEventListener('click', () => {
             this.confirmModalAction();
+        });
+        
+        // 导出统计数据按钮
+        document.getElementById('exportStatsBtn').addEventListener('click', () => {
+            this.exportStatistics();
         });
     }
 
@@ -1089,27 +1557,27 @@ class RollCallApp {
         
         body.innerHTML = `
             <form id="studentForm">
-                <div class="form-group">
-                    <label for="studentName">学生姓名 <span class="required">*</span></label>
-                    <input type="text" id="studentName" required>
-                </div>
-                <div class="form-group">
-                    <label for="studentId">学号</label>
-                    <input type="text" id="studentId">
-                </div>
-                <div class="form-group">
-                    <label for="studentPhone">电话</label>
-                    <input type="tel" id="studentPhone">
-                </div>
-                <div class="form-group">
-                    <label for="studentEmail">邮箱</label>
-                    <input type="email" id="studentEmail">
-                </div>
-                <div class="form-group">
-                    <label for="studentNotes">备注</label>
-                    <textarea id="studentNotes" rows="2"></textarea>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="studentName">学生姓名 <span class="required">*</span></label>
+                        <input type="text" id="studentName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentId">学号</label>
+                        <input type="text" id="studentId" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="studentPhone">电话</label>
+                        <input type="tel" id="studentPhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="studentEmail">邮箱</label>
+                        <input type="email" id="studentEmail" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="studentNotes">备注</label>
+                        <textarea id="studentNotes" rows="2" class="form-control"></textarea>
+                    </div>
+                </form>
         `;
         
         confirm.textContent = '添加';
@@ -1186,23 +1654,23 @@ class RollCallApp {
                 <form id="studentForm">
                     <div class="form-group">
                         <label for="studentName">学生姓名 <span class="required">*</span></label>
-                        <input type="text" id="studentName" value="${student.name}" required>
+                        <input type="text" id="studentName" class="form-control" value="${student.name}" required>
                     </div>
                     <div class="form-group">
                         <label for="studentId">学号</label>
-                        <input type="text" id="studentId" value="${student.studentId || ''}">
+                        <input type="text" id="studentId" class="form-control" value="${student.studentId || ''}">
                     </div>
                     <div class="form-group">
                         <label for="studentPhone">电话</label>
-                        <input type="tel" id="studentPhone" value="${student.phone || ''}">
+                        <input type="tel" id="studentPhone" class="form-control" value="${student.phone || ''}">
                     </div>
                     <div class="form-group">
                         <label for="studentEmail">邮箱</label>
-                        <input type="email" id="studentEmail" value="${student.email || ''}">
+                        <input type="email" id="studentEmail" class="form-control" value="${student.email || ''}">
                     </div>
                     <div class="form-group">
                         <label for="studentNotes">备注</label>
-                        <textarea id="studentNotes" rows="2">${student.notes || ''}</textarea>
+                        <textarea id="studentNotes" rows="2" class="form-control">${student.notes || ''}</textarea>
                     </div>
                 </form>
             `;

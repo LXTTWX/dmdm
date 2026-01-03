@@ -908,11 +908,18 @@ input[type="checkbox"] {
 
 /* 图表容器 */
 .chart-container {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-6);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
     border: 1px solid var(--gray-200);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chart-container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
 }
 
 .chart-header {
@@ -928,6 +935,335 @@ input[type="checkbox"] {
     font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--gray-900);
+    margin: 0;
+    position: relative;
+    padding-bottom: var(--spacing-1);
+}
+
+.chart-header h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+    border-radius: 2px;
+}
+
+/* 图表样式 */
+.chart {
+    position: relative;
+    padding: var(--spacing-4) 0;
+}
+
+/* 条形图通用样式 */
+#frequencyChart, #dailyDistributionChart, #algorithmUsageChart {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.chart-bar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
+    border-radius: var(--border-radius-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-bar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chart-bar:hover {
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateX(8px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.chart-bar:hover::before {
+    opacity: 1;
+}
+
+.bar-label {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--gray-800);
+    transition: color 0.3s ease;
+}
+
+.chart-bar:hover .bar-label {
+    color: var(--primary-color);
+}
+
+.bar-container {
+    position: relative;
+    height: 40px;
+    background: linear-gradient(180deg, var(--gray-100), var(--gray-200));
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* 为不同图表设置不同的渐变颜色 */
+#frequencyChart .bar-fill {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+}
+
+#dailyDistributionChart .bar-fill {
+    background: linear-gradient(135deg, var(--success-color), var(--success-color-dark, #059669));
+}
+
+#algorithmUsageChart .bar-fill {
+    background: linear-gradient(135deg, var(--warning-color), var(--warning-color-dark, #d97706));
+}
+
+.chart-bar:hover .bar-fill {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+    transform: scaleX(1.02);
+}
+
+.bar-value {
+    position: relative;
+    margin-right: var(--spacing-3);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.chart-bar:hover .bar-value {
+    transform: translateY(-2px);
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 饼图样式 */
+.pie-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    position: relative;
+}
+
+.pie-chart {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(
+        var(--primary-color) 0deg 90deg,
+        var(--success-color) 90deg 180deg,
+        var(--warning-color) 180deg 270deg,
+        var(--error-color) 270deg 360deg
+    );
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.pie-chart:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.pie-chart::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pie-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+    justify-content: center;
+    margin-top: var(--spacing-6);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--border-radius-md);
+    background: var(--gray-50);
+    transition: all 0.3s ease;
+}
+
+.legend-item:hover {
+    background: var(--primary-bg);
+    transform: translateY(-2px);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.legend-label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.legend-value {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* 折线图样式 */
+.line-chart-container {
+    position: relative;
+    height: 300px;
+    padding: var(--spacing-4);
+    background: var(--gray-50);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+}
+
+.line-chart {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.line-path {
+    fill: none;
+    stroke: var(--primary-color);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.3s ease;
+}
+
+.line-chart-container:hover .line-path {
+    stroke: var(--primary-dark);
+    stroke-width: 4;
+}
+
+.area-fill {
+    fill: url(#area-gradient);
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.line-chart-container:hover .area-fill {
+    opacity: 0.5;
+}
+
+.line-dot {
+    fill: var(--primary-color);
+    stroke: white;
+    stroke-width: 3;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.line-dot:hover {
+    fill: var(--primary-dark);
+    stroke-width: 4;
+    transform: scale(1.2);
+}
+
+.line-grid {
+    stroke: var(--gray-200);
+    stroke-dasharray: 5, 5;
+    stroke-width: 1;
+}
+
+.line-axis {
+    stroke: var(--gray-400);
+    stroke-width: 2;
+}
+
+.line-axis-label {
+    font-size: var(--font-size-xs);
+    fill: var(--gray-600);
+    font-weight: 500;
+}
+
+/* 工具提示样式 */
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-sm);
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(10px);
+}
+
+.chart-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.chart-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid rgba(0, 0, 0, 0.8);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-10);
+    color: var(--gray-500);
+    font-size: var(--font-size-lg);
+    background: var(--gray-50);
+    border-radius: var(--border-radius-lg);
+    border: 2px dashed var(--gray-300);
 }
 
 /* 设置组 */
@@ -959,6 +1295,108 @@ input[type="checkbox"] {
 
 .setting-item:last-child {
     border-bottom: none;
+}
+
+/* 饼图样式 */
+.pie-chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-4);
+}
+
+.pie-slice {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    cursor: pointer;
+}
+
+.pie-slice:hover {
+    opacity: 0.8;
+    transform: scale(1.02);
+}
+
+.pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-6);
+    width: 100%;
+    max-width: 300px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2);
+    border-radius: var(--border-radius-md);
+    transition: background-color 0.2s ease;
+}
+
+.legend-item:hover {
+    background-color: var(--gray-50);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.legend-text {
+    font-size: var(--font-size-sm);
+    color: var(--gray-700);
+    flex: 1;
+}
+
+/* 折线图样式 */
+.line-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-4);
+    overflow-x: auto;
+}
+
+.line-chart-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.data-points circle {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.data-points circle:hover {
+    stroke: var(--primary-dark);
+    stroke-width: 3;
+    opacity: 0.9;
+}
+
+.grid-lines line {
+    transition: opacity 0.3s ease;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .pie-chart-container {
+        padding: var(--spacing-2);
+    }
+    
+    .line-chart-container {
+        padding: var(--spacing-2);
+    }
+    
+    .pie-legend {
+        max-width: 100%;
+    }
+    
+    .chart-container {
+        padding: var(--spacing-4);
+    }
 }
 
 .setting-item label {
@@ -1360,5 +1798,129 @@ input[type="checkbox"] {
     
     .notification {
         padding: var(--spacing-3);
+    }
+}
+
+/* 学生卡片容器 */
+.student-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    position: relative;
+    z-index: 2; /* 确保卡片在容器上方 */
+}
+
+.student-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 学生卡片头部 */
+.student-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.student-name {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* 学生卡片操作按钮 */
+.student-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-icon {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 学生卡片主体 */
+.student-card-body {
+    padding: 20px;
+}
+
+/* 学生信息区域 */
+.student-info {
+    margin-bottom: 20px;
+}
+
+.info-item {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.info-label {
+    width: 80px;
+    font-weight: 500;
+    color: #666;
+}
+
+.info-value {
+    color: #333;
+    font-weight: 400;
+}
+
+/* 学生统计信息 */
+.student-stats {
+    display: flex;
+    gap: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+}
+
+.stat i {
+    color: #667eea;
+    font-size: 18px;
+}
+
+/* 学生列表容器样式 */
+.students-section {
+    padding: 20px;
+}
+
+.students-content {
+    margin-top: 20px;
+}
+
+.students-list {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* 响应式调整学生卡片布局 */
+@media (max-width: 768px) {
+    .students-list {
+        grid-template-columns: 1fr;
     }
 }
